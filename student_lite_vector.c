@@ -3,57 +3,39 @@
 #include <stdio.h>
 #include <string.h>
 
-/*
- * Vector is a dynamic "array", should be able to increase in size, but not decrease
- * vector struct:
- * typedef struct lv {
- *	  size_t length;
- *	  size_t max_capacity;
- *	  size_t type_size;
- *	  void** data;
- *} lite_vector;
+/**
+ * A lite vector is a struct that holds a current length, a
+ * maximum capacity, and a dynamically allocated chunk of
+ * memory. It will hold elements added and will extend the
+ * memory if it needs more space.
  *
- * Notes say that type_size in lite_vector is useless, don't use it
+ * Note: All referenced sources and notes can be found in notes.md
  *
- * ArrayList = Vector
- * A bucket of elements
- *      Ask for chunk of memory
- *      Has specific amount of elements
- *      Starts to fill up
- *      Ask computer for more memory
- *      Copy all elements in Vec1 to new malloc'd Vec2
- *      Free Vec1
- *      Storing pointers inside of arraylist
- *          Data type is void*
- *          lv_data = void** because it points to a void*
- *          Malloc to some size you want to start out with (10, 100)
- *          When you fill it up, ask for more.
- *              How much more? idk pick something, 2x original size or 1.67x
- *              resize does this
- *              use memcpy to do the vec1 to vec2 copy
- *
- *
- *   Two things you can do in the first function
- *      Has to return a lite_vector pointer,
- *          this implies that it has to go on the heap
- *              Mechanism for getting heap memory is malloc
- *              lite_vector HOLD data (void**)
- *                  We have to malloc DATA void** too!!!!!1
- *
+ * @author Evan Johns
+ * @date 2/6/2022
  */
 
 /**
  * Create a new lite_vector.
  *
- * @param type_size The number of bytes for a single element of the type
- *                  to be stored in the vector.
+ * @param type_size The number of bytes for a single element of
+ *                  the type to be stored in the vector.
  * @return The vector, or NULL if the operation fails.
  */
 lite_vector* lv_new_vec(size_t type_size) {
-    lite_vector* tmp = malloc(sizeof(lite_vector)); // allocate nbits of memory to the pointer
-    tmp->data = malloc(sizeof(void**));
+
+    // allocate memory for vec pointer
+    lite_vector* tmp = malloc(sizeof(lite_vector));
+
+    // set vec parameters
     tmp->length = 0;
-    tmp->max_capacity = 0;
+    tmp->max_capacity = 10;
+
+    // allocate memory for data
+    tmp->data = malloc(sizeof(void*) * tmp->max_capacity);
+
+    // return new vector
+    return tmp;
 }
 
 /**
@@ -63,7 +45,12 @@ lite_vector* lv_new_vec(size_t type_size) {
  * @param vec The address of the vector we are finished using.
  */
 void lv_cleanup(lite_vector* vec){
-    free(vec); //lul no
+
+    // free memory of vector data
+    free(vec->data);
+
+    // free memory of vector
+    free(vec);
 }
 
 /**
@@ -73,6 +60,11 @@ void lv_cleanup(lite_vector* vec){
  * @return The vector length, or 0 if the operation fails.
  */
 size_t lv_get_length(lite_vector* vec){
+
+    // check if vector is null
+    if (!vec) {
+        return 0;
+    }
     return vec->length;
 }
 
@@ -83,6 +75,20 @@ size_t lv_get_length(lite_vector* vec){
  * @retun Sends true on success, or false otherwise.
  */
 bool lv_clear(lite_vector* vec){
+
+    // Check if vec is NULL
+    if (!vec) {
+        return false;
+    }
+
+    // Free vec data memory
+    free(vec->data);
+
+    // re-initialize vector
+    vec->length = 0;
+    vec->max_capacity = 10;
+    vec->data = malloc(sizeof(void*) * vec->max_capacity);
+    return true;
 }
 
 /**
@@ -94,6 +100,14 @@ bool lv_clear(lite_vector* vec){
  *	   the function cannot complete.
  */
 void* lv_get(lite_vector* vec, size_t index){
+
+    // Check if vec is NULL or Index is not in vec
+    if (!vec || (index >= vec->length)) {
+        return NULL;
+    }
+
+    // Return Indexed element
+    return vec->data[index];
 }
 
 /**
@@ -105,8 +119,34 @@ void* lv_get(lite_vector* vec, size_t index){
  * and return appropriately.  Do NOT destroy the data if the code
  * fails.  If the resize cannot complete, the original vector
  * must remain unaffected.
+ * @param lite_vector* vec Vector to be resized
+ *
  */
 static bool lv_resize(lite_vector* vec){
+
+    // If the vector is NULL, return false
+    if (!vec) {
+        return false;
+    }
+
+    // Create temporary data
+    void** data = malloc(sizeof(void*) * vec->max_capacity * 2);
+
+    // Increase vector max capacity
+    vec->max_capacity = vec->max_capacity*2;
+
+    // Copy data from vec to data
+    memcpy(data, vec->data, sizeof(void*) * vec->max_capacity);
+
+    // If the data isn't the same, return false
+    if (*vec->data != *data) {
+        return false;
+    }
+
+    // Check for memory leaks (valgrind) maybe
+    free(vec->data);
+    vec->data = data;
+    return true;
 }
 
 /**
@@ -117,4 +157,27 @@ static bool lv_resize(lite_vector* vec){
  * @return Will return true if successful, false otherwise.
  */
 bool lv_append(lite_vector* vec, void* element){
+
+    // Check if vec is NULL
+    if (!vec) {
+        return false;
+    }
+
+    // Check if vec is at max capacity.
+    if (vec->length >= vec->max_capacity) {
+        // If at max capacity, resize to fit new element
+        if (lv_resize(vec)) {
+            // Add element
+            vec->data[vec->length] = element;
+            vec->length += 1;
+        } else {
+            // If resize fails, return false
+            return false;
+        }
+    } else {
+        // If vec isn't at max capacity, add element
+        vec->data[vec->length] = element;
+        vec->length += 1;
+    }
+    return true;
 }

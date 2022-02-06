@@ -1,3 +1,6 @@
+**References:**
+
+I worked on parts of this assignment with Andreas Martinez
 
 What is a vector in Computer Science?
 
@@ -13,7 +16,10 @@ What is a vector in Computer Science?
 C vector API:
 *https://en.cppreference.com/w/cpp/container/vector*
 
-memcpy
+memcpy:
 
     memcpy may be used to implicitly create objects in the destination buffer
 *https://en.cppreference.com/w/cpp/string/byte/memcpy*
+
+One person's take on an ArrayList, might be able to learn some things
+*https://codereview.stackexchange.com/questions/64423/implementing-an-arraylist*
