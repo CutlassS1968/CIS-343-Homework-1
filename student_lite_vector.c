@@ -52,6 +52,8 @@
 lite_vector* lv_new_vec(size_t type_size) {
     lite_vector* tmp = malloc(sizeof(lite_vector)); // allocate nbits of memory to the pointer
     tmp->data = malloc(sizeof(void**));
+    tmp->length = 0;
+    tmp->max_capacity = 0;
 }
 
 /**
@@ -61,7 +63,7 @@ lite_vector* lv_new_vec(size_t type_size) {
  * @param vec The address of the vector we are finished using.
  */
 void lv_cleanup(lite_vector* vec){
-    free(vec);
+    free(vec); //lul no
 }
 
 /**
@@ -71,6 +73,7 @@ void lv_cleanup(lite_vector* vec){
  * @return The vector length, or 0 if the operation fails.
  */
 size_t lv_get_length(lite_vector* vec){
+    return vec->length;
 }
 
 /**
